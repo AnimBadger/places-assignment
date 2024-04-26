@@ -4,8 +4,30 @@ import { dbConfig } from './config/databaseConfig'
 import Logging from './library/logging'
 import cors from 'cors'
 import placeRouter from './route/placeRoute'
+import swaggerUI from 'swagger-ui-express'
+import swaggerJSDoc from 'swagger-jsdoc'
+
+
+const options = {
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'Places Api',
+            version: '1.0.0',
+            description: "Places api with Express"
+        },
+        servers: [
+            { url: `http://localhost:${dbConfig.server.port}` }
+        ]
+    },
+    apis: ['./route/**/*.ts']
+}
+
+const specs = swaggerJSDoc(options)
 
 const app = express()
+
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(specs))
 
 mongoose.connect(dbConfig.mongo.url)
     .then(() => {
