@@ -67,33 +67,32 @@ const dropPlace = async (req: Request, res: Response) => {
     try {
         const place = await placeModel.findOneAndDelete({ placeId: placeId });
         place
-            ? res.status(404).json()
+            ? res.status(204).json()
             : res.status(404).json({ message: 'Resource not found' });
     } catch (error) {
         res.status(500).json({ error });
     }
 }
 
+/** broken, create update interface */
 const updatePlace = async (req: Request, res: Response) => {
     try {
-        const placeId = req.params.placeId
-        const { name, description, location, openHours, image } = req.body
-
-        /** read on patch instead of updating all */
+        const placeId = req.params.placeId;
+        const { name, description, location, openHours } = req.body;
 
         if (!name || !description || !location || !openHours) {
-            Logging.info('parameter insufficient before error')
-            return res.status(400).json({ message: 'Insufficient requests passed' })
+            Logging.info('parameter insufficient before error');
+            return res.status(400).json({ message: 'Insufficient requests passed' });
         }
+
         if (!req.file) {
-            Logging.info('Image parameter insufficient before error')
-            return res.status(400).json({ message: 'Insufficient requests passed' })
+            Logging.info('Image parameter insufficient before error');
+            return res.status(400).json({ message: 'Insufficient requests passed' });
         }
 
-        const imageUrl: string = req.file?.path || ''
+        const imageUrl: string = req.file ? req.file.path || '' : '';
 
-        const updateData: IPlace = {
-            placeId,
+        const updateData: Partial<IPlace> = {
             name,
             description,
             location,
@@ -101,15 +100,17 @@ const updatePlace = async (req: Request, res: Response) => {
             image: imageUrl,
         };
 
-        const newPlace = await placeModel.findOneAndUpdate({ placeId: placeId }, updateData, { new: true, runValidators: true })
-        newPlace
-            ? res.status(202).json({ newPlace })
-            : res.status(404).json({ message: 'Resource not found' })
+        const newPlace = await placeModel.findOneAndUpdate({ placeId: placeId }, updateData, { new: true, runValidators: true });
+
+        if (newPlace) {
+            res.status(202).json({ newPlace });
+        } else {
+            res.status(404).json({ message: 'Resource not found' });
+        }
     } catch (error) {
-        res.status(500).json({ error })
+        Logging.error(error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-
-
 }
 
 export default {
